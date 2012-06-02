@@ -38,6 +38,12 @@ namespace OpenCLDotNetMonitor
         /// the content of the message
         /// </summary>
         public string[] Body { get; set; }
+        /// <summary>
+        /// the message body as a float array
+        /// </summary>
+        public float[] BodyAsFloatArray {
+            get { return Body.Select(x => float.Parse(x)).ToArray(); }
+        }
 
         private MonitorMessage()
         {
@@ -93,6 +99,7 @@ namespace OpenCLDotNetMonitor
             return m;            
         }
 
+
         /// <summary>
         /// create an instance of a MonitorMessage with a list of strings as the message body
         /// </summary>
@@ -128,6 +135,39 @@ namespace OpenCLDotNetMonitor
             m.OpCode_Raw = (int)_op;
         }
 
+        /// <summary>
+        /// create an instance of a MonitorMessage with a list of int as the message body
+        /// </summary>
+        /// <param name="_op">the operation type</param>
+        /// <param name="_as">0 if operation was succesfull, non zero otherwise</param>
+        /// <param name="_aps">error code, 0 if not error</param>
+        /// <param name="_body">body of the message</param>
+        public MonitorMessage(OpCodes _op, int _as, int _aps, int[] _body)
+        {
+            MonitorMessage m = new MonitorMessage();
+
+            m.Body = _body.Select(x => x.ToString()).ToArray();
+            m.As = _as;
+            m.Aps = _aps;
+            m.OpCode = _op;
+            m.OpCode_Raw = (int)_op;
+        }
+        /// <summary>
+        /// create an instance of a MonitorMessage with an empty body
+        /// </summary>
+        /// <param name="_op">the operation type</param>
+        /// <param name="_as">0 if operation was succesfull, non zero otherwise</param>
+        /// <param name="_aps">error code, 0 if not error</param>
+        public MonitorMessage(OpCodes _op, int _as, int _aps)
+        {
+            MonitorMessage m = new MonitorMessage();
+
+            m.Body = new string[] { };
+            m.As = _as;
+            m.Aps = _aps;
+            m.OpCode = _op;
+            m.OpCode_Raw = (int)_op;
+        }
         /// <summary>
         /// create an instance of a MonitorMessage with a single string as message body
         /// </summary>

@@ -106,17 +106,52 @@ namespace OpenCLDotNetMonitor
                     ps))
             {
                 queuePipe.WaitForConnection();
+                StreamString ss = new StreamString(queuePipe);
                 try
                 {
                     // Read the request from the client. Once the client has
                     // written to the pipe its security token will be available.
 
-                    StreamString ss = new StreamString(queuePipe);
 
                     // Verify our identity to the connected client using a
                     // string that the client anticipates.
 
-                    string input = ss.ReadString();
+                    MonitorMessage messageIn;
+                    // step 1: enable counters
+                    messageIn = MonitorMessage.ParseFromString(ss.ReadString());
+                    if (messageIn.OpCode != OpCodes.ENUMERATE_COUNTERS)
+                        throw new InvalidOperationException("I was expeting an Enumerate Counters message and received " + messageIn.OpCode.ToString());
+                    // counters
+                    List<string> countersList = new List<string>(messageIn.Body);
+                    // list of counters to enable
+                    // TODO: how to get selectedCounters?
+                    string [] selectedCounters = new string[] {};
+                    ss.WriteString(new MonitorMessage(OpCodes.OK, 0, 0, selectedCounters.Select(x => countersList.IndexOf(x)).ToArray()).ToString());
+                    // step 2:perf init
+                    messageIn = MonitorMessage.ParseFromString(ss.ReadString());
+                    if (messageIn.OpCode != OpCodes.PERF_INIT)
+                        throw new InvalidOperationException("I was expeting an Perf init message and received " + messageIn.OpCode.ToString());
+                    ss.WriteString(new MonitorMessage(OpCodes.OK, 0, 0).ToString());
+                    // step 3: release
+                    messageIn = MonitorMessage.ParseFromString(ss.ReadString());
+                    if (messageIn.OpCode != OpCodes.RELEASE)
+                        throw new InvalidOperationException("I was expeting a release message and received " + messageIn.OpCode.ToString());
+                    ss.WriteString(new MonitorMessage(OpCodes.OK, 0, 0).ToString());
+
+                    // step 4: get counters
+                    messageIn = MonitorMessage.ParseFromString(ss.ReadString());
+                    if (messageIn.OpCode != OpCodes.GET_COUNTERS)
+                        throw new InvalidOperationException("I was expeting a Get Counters message and received " + messageIn.OpCode.ToString());
+                    float[] values = messageIn.BodyAsFloatArray;
+                    // TODO: send values
+
+                    ss.WriteString(new MonitorMessage(OpCodes.OK, 0, 0).ToString());
+
+                    // step 5: end
+                    messageIn = MonitorMessage.ParseFromString(ss.ReadString());
+                    if (messageIn.OpCode != OpCodes.END)
+                        throw new InvalidOperationException("I was expeting an End message and received " + messageIn.OpCode.ToString());
+                    ss.WriteString(new MonitorMessage(OpCodes.OK, 0, 0).ToString());
 
                 }
                 // Catch the IOException that is raised if the pipe is broken
@@ -125,7 +160,15 @@ namespace OpenCLDotNetMonitor
                 {
                     Console.WriteLine("ERROR: {0}", e.Message);
                 }
-                queuePipe.Close();
+                catch (InvalidOperationException e)
+                {
+                    // TODO: what is the code for invalid operation?
+                    ss.WriteString(new MonitorMessage(OpCodes.OK, 1, 1).ToString());
+                }
+                finally
+                {
+                    queuePipe.Close();
+                }
             }
         }
  

@@ -109,13 +109,6 @@ namespace OpenCLDotNetMonitor
                 StreamString ss = new StreamString(queuePipe);
                 try
                 {
-                    // Read the request from the client. Once the client has
-                    // written to the pipe its security token will be available.
-
-
-                    // Verify our identity to the connected client using a
-                    // string that the client anticipates.
-
                     MonitorMessage messageIn;
                     // step 1: enable counters
                     messageIn = MonitorMessage.ParseFromString(ss.ReadString());

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace OpenCLDotNetMonitor
 {
-    enum OpCodes
+    public enum OpCodes
     {
         CREATE,
         OK,

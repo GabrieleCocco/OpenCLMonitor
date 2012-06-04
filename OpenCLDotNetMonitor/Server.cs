@@ -123,7 +123,7 @@ namespace OpenCLDotNetMonitor
             using (NamedPipeServerStream queuePipe = new NamedPipeServerStream(pipename,
                     PipeDirection.InOut,
                     serverInstances,
-                    PipeTransmissionMode.Byte,
+                    PipeTransmissionMode.Message,
                     PipeOptions.None,
                     1,
                     1,

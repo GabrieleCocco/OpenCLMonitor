@@ -27,7 +27,7 @@ namespace OpenCLDotNetMonitor
             byte[] inBuffer = new byte[len];
             ioStream.Read(inBuffer, 0, len);
 
-            return streamEncoding.GetString(inBuffer);
+            return streamEncoding.GetString(inBuffer).TrimEnd('\0');
         }
 
         public int WriteString(string outString)

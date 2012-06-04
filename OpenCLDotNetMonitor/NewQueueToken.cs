@@ -12,5 +12,7 @@ namespace OpenCLDotNetMonitor
         public string queueName { get; set; }
         public AutoResetEvent semaphore = new AutoResetEvent(false);
         public bool abort = false;
+        public OpenCLMonitorServer.SelectCounter selectCounter { get; set; }
+        public OpenCLMonitorServer.ReceivedValues receivedValues { get; set; }
     }
 }

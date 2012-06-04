@@ -15,9 +15,16 @@ namespace OpenCLDotNetMonitor
         NamedPipeServerStream pipeServer;
 
         private const string serverPipeName = "openclmonitor_pipe";
+        public delegate string[] SelectCounter(string deviceId, string[] counters);
+        public delegate void ReceivedValues(string deviceId, float[] values);
 
-        public void StartServer()
+        private SelectCounter selectCounters;
+        private ReceivedValues receivedValues;
+
+        public void StartServer(SelectCounter selectCountersDelegate, ReceivedValues receivedValuesDelegate)
         {
+            selectCounters = selectCountersDelegate;
+            receivedValues = receivedValuesDelegate;
             System.Security.Principal.SecurityIdentifier sid = new System.Security.Principal.SecurityIdentifier(System.Security.Principal.WellKnownSidType.WorldSid, null);
             PipeAccessRule pac = new PipeAccessRule(sid, PipeAccessRights.ReadWrite, System.Security.AccessControl.AccessControlType.Allow);
             PipeSecurity ps = new PipeSecurity();
@@ -65,11 +72,13 @@ namespace OpenCLDotNetMonitor
                     // TODO: check return code is zero
                     // create pipe name
                     string newPipeName = CreatePipeName(messageIN.Body[0]);
-                    NewQueueToken token = new NewQueueToken() {DeviceId=messageIN.Body[0], queueName=newPipeName };
+                    NewQueueToken token = new NewQueueToken() 
+                        {DeviceId=messageIN.Body[0], 
+                            queueName=newPipeName,
+                        selectCounter = selectCounters,
+                        receivedValues = receivedValues};
                     // create thread
                     ThreadPool.QueueUserWorkItem(new WaitCallback(HandleQueueThread), token);
-                    // TODO: wait for the new pipe server to be ready...
-                    // LOCK ?
                     if (token.semaphore.WaitOne(new TimeSpan(0, 0, 5), false))
                     {
                         // send pipe name
@@ -136,8 +145,16 @@ namespace OpenCLDotNetMonitor
                     List<string> countersList = new List<string>(messageIn.Body);
                     // list of counters to enable
                     // TODO: how to get selectedCounters?
-                    string [] selectedCounters = new string[] {};
-                    ss.WriteString(new MonitorMessage(OpCodes.OK, 0, 0, selectedCounters.Select(x => countersList.IndexOf(x)).ToArray()).ToString());
+                    if (token.selectCounter != null)
+                    {
+                        string[] selectedCounters = token.selectCounter(token.DeviceId, countersList.ToArray());
+                        ss.WriteString(new MonitorMessage(OpCodes.OK, 0, 0, selectedCounters.Select(x => countersList.IndexOf(x)).ToArray()).ToString());
+                    }
+                    else
+                    {
+                        // delegate not set!
+                        ss.WriteString(new MonitorMessage(OpCodes.OK, 0, 0, new int[]{}).ToString());
+                    }
                     // step 2:perf init
                     messageIn = MonitorMessage.ParseFromString(ss.ReadString());
                     if (messageIn.OpCode != OpCodes.PERF_INIT)
@@ -155,6 +172,10 @@ namespace OpenCLDotNetMonitor
                         throw new InvalidOperationException("I was expeting a Get Counters message and received " + messageIn.OpCode.ToString());
                     float[] values = messageIn.BodyAsFloatArray;
                     // TODO: send values
+                    if (token.receivedValues != null)
+                    {
+                        token.receivedValues(token.DeviceId, values);
+                    }
 
                     ss.WriteString(new MonitorMessage(OpCodes.OK, 0, 0).ToString());
 

@@ -33,10 +33,10 @@ namespace OpenCLDotNetMonitor
             pipeServer = new NamedPipeServerStream(serverPipeName,
                     PipeDirection.InOut,
                     serverInstances,
-                    PipeTransmissionMode.Byte,
+                    PipeTransmissionMode.Message,
                     PipeOptions.Asynchronous,
-                    1,
-                    1,
+                    1024,
+                    1024,
                     ps);
             AsyncCallback myCallback = new AsyncCallback(AsyncPipeCallback);
             pipeServer.BeginWaitForConnection(myCallback, null);

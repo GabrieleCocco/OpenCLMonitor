@@ -94,7 +94,7 @@ namespace OpenCLDotNetMonitor
                     }
 
       
-        }
+                }
                 else
                 {
                     // received a message with error code

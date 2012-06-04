@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>73931bf1-20f5-409b-8b43-e10e7f9e89f5</ProjectGuid>
+    <ProjectGuid>{CDD3A868-AE12-406B-A8CD-F6159770B51A}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>OpenCLMonitorTester</RootNamespace>
@@ -43,6 +43,12 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OpenCLDotNetMonitor\OpenCLDotNetMonitor.csproj">
+      <Project>{9BBD1579-D79E-415C-8064-7BFAF4888D8E}</Project>
+      <Name>OpenCLDotNetMonitor</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

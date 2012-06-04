@@ -5,15 +5,26 @@ using System.Text;
 
 namespace OpenCLDotNetMonitor
 {
+    /*
+extern "C" OPENCLCOMUTIL_API typedef enum OpenCLMonitoringMessageID {
+	CREATE_QUEUE_MESSAGE,
+	ENABLE_COUNTERS_MESSAGE,
+	GPU_PERF_INIT_MESSAGE,
+	RELEASE_QUEUE_MESSAGE,
+	GET_COUNTERS_MESSAGE,
+	GPU_PERF_RELEASE_MESSAGE,
+	OK_MESSAGE
+} OpenCLMonitoringMessageID;
+     */
     public enum OpCodes
     {
         CREATE,
-        OK,
         ENUMERATE_COUNTERS,
         PERF_INIT,
         RELEASE,
         GET_COUNTERS,
-        END
+        END,
+        OK
     }
 
     public class MonitorMessage
@@ -43,6 +54,13 @@ namespace OpenCLDotNetMonitor
         /// </summary>
         public float[] BodyAsFloatArray {
             get { return Body.Select(x => float.Parse(x)).ToArray(); }
+        }
+        /// <summary>
+        /// the message body as a float array
+        /// </summary>
+        public int[] BodyAsIntArray
+        {
+            get { return Body.Select(x => int.Parse(x)).ToArray(); }
         }
 
         private MonitorMessage()
@@ -109,12 +127,11 @@ namespace OpenCLDotNetMonitor
         /// <param name="_body">body of the message</param>
         public MonitorMessage(OpCodes _op, int _as, int _aps, string[] _body)
         {
-            MonitorMessage m = new MonitorMessage();
-            m.Body = _body;
-            m.As = _as;
-            m.Aps = _aps;
-            m.OpCode = _op;
-            m.OpCode_Raw = (int) _op;
+            Body = _body;
+            As = _as;
+            Aps = _aps;
+            OpCode = _op;
+            OpCode_Raw = (int) _op;
         }
 
         /// <summary>
@@ -126,13 +143,11 @@ namespace OpenCLDotNetMonitor
         /// <param name="_body">body of the message</param>
         public MonitorMessage(OpCodes _op, int _as, int _aps, float[] _body)
         {
-            MonitorMessage m = new MonitorMessage();
-
-            m.Body = _body.Select(x => x.ToString()).ToArray() ;
-            m.As = _as;
-            m.Aps = _aps;
-            m.OpCode = _op;
-            m.OpCode_Raw = (int)_op;
+            Body = _body.Select(x => x.ToString()).ToArray() ;
+            As = _as;
+            Aps = _aps;
+            OpCode = _op;
+            OpCode_Raw = (int)_op;
         }
 
         /// <summary>
@@ -144,13 +159,11 @@ namespace OpenCLDotNetMonitor
         /// <param name="_body">body of the message</param>
         public MonitorMessage(OpCodes _op, int _as, int _aps, int[] _body)
         {
-            MonitorMessage m = new MonitorMessage();
-
-            m.Body = _body.Select(x => x.ToString()).ToArray();
-            m.As = _as;
-            m.Aps = _aps;
-            m.OpCode = _op;
-            m.OpCode_Raw = (int)_op;
+            Body = _body.Select(x => x.ToString()).ToArray();
+            As = _as;
+            Aps = _aps;
+            OpCode = _op;
+            OpCode_Raw = (int)_op;
         }
         /// <summary>
         /// create an instance of a MonitorMessage with an empty body
@@ -160,13 +173,11 @@ namespace OpenCLDotNetMonitor
         /// <param name="_aps">error code, 0 if not error</param>
         public MonitorMessage(OpCodes _op, int _as, int _aps)
         {
-            MonitorMessage m = new MonitorMessage();
-
-            m.Body = new string[] { };
-            m.As = _as;
-            m.Aps = _aps;
-            m.OpCode = _op;
-            m.OpCode_Raw = (int)_op;
+            Body = new string[] { };
+            As = _as;
+            Aps = _aps;
+            OpCode = _op;
+            OpCode_Raw = (int)_op;
         }
         /// <summary>
         /// create an instance of a MonitorMessage with a single string as message body
@@ -177,13 +188,12 @@ namespace OpenCLDotNetMonitor
         /// <param name="_body">body of the message</param>
         public MonitorMessage(OpCodes _op, int _as, int _aps, string _body)
         {
-            MonitorMessage m = new MonitorMessage();
 
-            m.Body = new string[] { _body };
-            m.As = _as;
-            m.Aps = _aps;
-            m.OpCode = _op;
-            m.OpCode_Raw = (int)_op;
+            Body = new string[] { _body };
+            As = _as;
+            Aps = _aps;
+            OpCode = _op;
+            OpCode_Raw = (int)_op;
         }
 
         /// <summary>
@@ -194,13 +204,16 @@ namespace OpenCLDotNetMonitor
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendFormat("{0} {1} {2} ", OpCode_Raw, As, Aps);
-            foreach (string b in Body)
+            if (Body != null)
             {
-                sb.AppendFormat("{0} ", b);
+                foreach (string b in Body)
+                {
+                    sb.AppendFormat("{0} ", b);
+                }
+                // remove last space
+                if (Body.Length > 0)
+                    sb.Remove(sb.Length - 1, 1);
             }
-            // remove last space
-            if (Body.Length > 0)
-                sb.Remove(sb.Length - 1, 1);
             return sb.ToString();
         }
 

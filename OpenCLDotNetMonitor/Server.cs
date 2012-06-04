@@ -14,16 +14,16 @@ namespace OpenCLDotNetMonitor
         private static int serverInstances = 1;
         NamedPipeServerStream pipeServer;
 
+        private const string serverPipeName = "openclmonitor_pipe";
+
         public void StartServer()
         {
-            //Create a unique pipe name.  
-            string pipeName = "openclmonitor_pipe";
             System.Security.Principal.SecurityIdentifier sid = new System.Security.Principal.SecurityIdentifier(System.Security.Principal.WellKnownSidType.WorldSid, null);
             PipeAccessRule pac = new PipeAccessRule(sid, PipeAccessRights.ReadWrite, System.Security.AccessControl.AccessControlType.Allow);
             PipeSecurity ps = new PipeSecurity();
             ps.AddAccessRule(pac);
-            sid = null; 
-            pipeServer = new NamedPipeServerStream(pipeName,
+            sid = null;
+            pipeServer = new NamedPipeServerStream(serverPipeName,
                     PipeDirection.InOut,
                     serverInstances,
                     PipeTransmissionMode.Byte,
@@ -46,9 +46,10 @@ namespace OpenCLDotNetMonitor
         /// creates an unique pipe name
         /// </summary>
         /// <returns></returns>
-        private string CreatePipeName()
+        private string CreatePipeName(string deviceID)
         {
-            return System.Guid.NewGuid().ToString("N");
+            //return System.Guid.NewGuid().ToString("N");
+            return string.Concat(new string[]{serverPipeName, "_", deviceID});
         }
 
         private void AsyncPipeCallback(IAsyncResult Result)
@@ -59,20 +60,32 @@ namespace OpenCLDotNetMonitor
                 pipeServer.EndWaitForConnection(Result);
                 StreamString ss = new StreamString(pipeServer);
                 MonitorMessage messageIN = MonitorMessage.ParseFromString(ss.ReadString());
-                if (messageIN.As == 0)
+                if (messageIN.As == 0 && messageIN.Body.Length>0)
                 {
                     // TODO: check return code is zero
                     // create pipe name
-                    string newPipeName = CreatePipeName();
+                    string newPipeName = CreatePipeName(messageIN.Body[0]);
+                    NewQueueToken token = new NewQueueToken() {DeviceId=messageIN.Body[0], queueName=newPipeName };
                     // create thread
-                    ThreadPool.QueueUserWorkItem(new WaitCallback(HandleQueueThread), newPipeName);
+                    ThreadPool.QueueUserWorkItem(new WaitCallback(HandleQueueThread), token);
                     // TODO: wait for the new pipe server to be ready...
                     // LOCK ?
+                    if (token.semaphore.WaitOne(new TimeSpan(0, 0, 5), false))
+                    {
+                        // send pipe name
+                        MonitorMessage messageOUT = new MonitorMessage(OpCodes.OK, 0, 0, newPipeName);
+                        ss.WriteString(messageOUT.ToString());
+                    }
+                    else
+                    {
+                        // timeout, aborting
+                        MonitorMessage messageOUT = new MonitorMessage(OpCodes.OK, 1, 0);
+                        ss.WriteString(messageOUT.ToString());
+                        token.abort = true;
+                    }
 
-                    // send pipe name
-                    MonitorMessage messageOUT = new MonitorMessage(OpCodes.OK, 0, 0, newPipeName);
-                    ss.WriteString(messageOUT.ToString());
-                }
+      
+        }
                 else
                 {
                     // received a message with error code
@@ -89,7 +102,8 @@ namespace OpenCLDotNetMonitor
         static void HandleQueueThread(Object stateInfo)
         {
             // the pipe here will be handled synchronously
-            string pipename = (string)stateInfo;
+            NewQueueToken token = (NewQueueToken)stateInfo;
+            string pipename = token.queueName;
             System.Security.Principal.SecurityIdentifier sid = new System.Security.Principal.SecurityIdentifier(System.Security.Principal.WellKnownSidType.WorldSid, null);
             PipeAccessRule pac = new PipeAccessRule(sid, PipeAccessRights.ReadWrite, System.Security.AccessControl.AccessControlType.Allow);
             PipeSecurity ps = new PipeSecurity();
@@ -105,6 +119,10 @@ namespace OpenCLDotNetMonitor
                     1,
                     ps))
             {
+                // inform the main thread that the queue is on
+                token.semaphore.Set();
+                if (token.abort)
+                    return;
                 queuePipe.WaitForConnection();
                 StreamString ss = new StreamString(queuePipe);
                 try

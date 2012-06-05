@@ -68,14 +68,14 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\gabriele\OpenCLSpy\OpenCLComUtil;C:\Program Files\AMD APP\include;C:\Users\gabriele\APUBenchmarks\GPUPerfAPI\Include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\gabriele\OpenCLMonitor\OpenCLComUtil;C:\Program Files\AMD APP\include;C:\Users\gabriele\APUBenchmarks\GPUPerfAPI\Include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>C:\Users\gabriele\OpenCLSpy\Release;C:\Program Files\AMD APP\lib\x86;C:\Users\gabriele\APUBenchmarks\GPUPerfAPI\Bin\x86</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\gabriele\OpenCLMonitor\Release;C:\Program Files\AMD APP\lib\x86;C:\Users\gabriele\APUBenchmarks\GPUPerfAPI\Bin\x86</AdditionalLibraryDirectories>
       <AdditionalDependencies>OpenCLComUtil.lib;OpenCL.lib;GPUPerfAPICL.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

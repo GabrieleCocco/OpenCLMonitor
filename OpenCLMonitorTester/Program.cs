@@ -15,8 +15,8 @@ namespace OpenCLMonitorTester
             OpenCLMonitorServer server = new OpenCLMonitorServer();
             server.StartServer(new OpenCLMonitorServer.SelectCounter(SelectCounters), new OpenCLMonitorServer.ReceivedValues(ReceivedValues));
             Console.WriteLine("waiting for data");
-            ThreadPool.QueueUserWorkItem(new WaitCallback(TestClient), new object());
-            Console.WriteLine("test program running, press enter to stop");
+            //ThreadPool.QueueUserWorkItem(new WaitCallback(TestClient), new object());
+            //Console.WriteLine("test program running, press enter to stop");
             Console.ReadLine();
             server.StopServer();
         }
@@ -37,7 +37,7 @@ namespace OpenCLMonitorTester
             Console.WriteLine("selecting counters for device {0}", device);
             return new string[] { counters[0]};
         }
-
+        /*
         static void TestClient(object stateInfo)
         {
             Console.WriteLine("entering TestClient");
@@ -119,6 +119,6 @@ namespace OpenCLMonitorTester
             pipeClient2.Close();
             Console.WriteLine("TestClient queue done");
 
-        }
+        }*/
     }
 }

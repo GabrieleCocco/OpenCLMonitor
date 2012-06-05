@@ -29,8 +29,14 @@ extern CL_API_ENTRY cl_command_queue CL_API_CALL clCreateCommandQueueHooked(cl_c
 	if(mutex == INVALID_HANDLE_VALUE)
 		goto ret;
 	DWORD mutex_status = WaitForSingleObject(mutex, INFINITE);
+	printf("OK\n");
 	if(mutex_status == WAIT_OBJECT_0) {
-		if(!open_connection(PIPE_NAME, 0, &server_pipe)) {
+#ifdef DEBUG_PRINT
+	printf("Open connection to the pipe %s\n", PIPE_NAME);
+#endif
+	int r = open_connection(PIPE_NAME, 0, &server_pipe);
+		if(r != 0) {
+			printf("Error opening connection %d\n", r);
 			ReleaseMutex(mutex);
 			goto ret;
 		}
@@ -71,10 +77,11 @@ extern CL_API_ENTRY cl_command_queue CL_API_CALL clCreateCommandQueueHooked(cl_c
 #endif
 		receive_message(server_pipe, &message);
 #ifdef DEBUG_PRINT
-	printf("and received answer!\n");
+	printf("and received answer (%s)!\n", message.body[0]);
 #endif
 		char private_pipe_name[1024] = { 0 };
-		strcpy(private_pipe_name, message.body[0]);
+		sprintf(private_pipe_name, "%s", "\\\\.\\pipe\\");
+		sprintf(private_pipe_name + strlen("\\\\.\\pipe\\"), "%s",  message.body[0]);
 		free_message(&message);
 
 		//Close connection to server and open private connection
@@ -82,7 +89,8 @@ extern CL_API_ENTRY cl_command_queue CL_API_CALL clCreateCommandQueueHooked(cl_c
 //	printf("  Close server connection\n");
 #endif
 		close_connection(server_pipe);
-		if(!open_connection(private_pipe_name, false, &private_pipe)) {
+		r = open_connection(private_pipe_name, false, &private_pipe);
+		if(r != 0) {
 			ReleaseMutex(mutex);	
 			goto ret;
 		}
@@ -162,6 +170,7 @@ extern CL_API_ENTRY cl_command_queue CL_API_CALL clCreateCommandQueueHooked(cl_c
 	}
 
 	//Communicate counters name list
+	message.id = ENABLE_COUNTERS_MESSAGE;
 	message.action_result = 0;
 	message.api_result = 0;
 	message.body_count = c_count;
@@ -320,7 +329,7 @@ extern CL_API_ENTRY cl_int CL_API_CALL clReleaseCommandQueueHooked(cl_command_qu
 	int st = send_empty_message(info.private_pipe, RELEASE_QUEUE_MESSAGE, 0, 0);
 	printf("%d\n", st);
 #ifdef DEBUG_PRINT
-	printf("RELEASE_QUEUE_MESSAGE sent (%d, %d)...", -1, gpa_status);
+	printf("RELEASE_QUEUE_MESSAGE sent (%d, %d)...", 0, 0);
 #endif
 	st = receive_message(info.private_pipe, &message);
 	printf("%d\n", st);

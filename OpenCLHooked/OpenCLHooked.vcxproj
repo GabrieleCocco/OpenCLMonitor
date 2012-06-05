@@ -54,7 +54,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Users\gabriele\OpenCLSpy\Debug;C:\Users\gabriele\APUBenchmarks\GPUPerfAPI\Bin\x86;C:\Program Files\Microsoft Research\Detours Express 3.0\lib.X86;C:\Program Files\AMD APP\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\gabriele\OpenCLMonitor\Debug;C:\Users\gabriele\APUBenchmarks\GPUPerfAPI\Bin\x86;C:\Program Files\Microsoft Research\Detours Express 3.0\lib.X86;C:\Program Files\AMD APP\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>OpenCLComUtil.lib;GPUPerfAPICL.lib;detours.lib;OpenCL.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -66,14 +66,14 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;OPENCLHOOKED_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\gabriele\OpenCLSpy\OpenCLComUtil;C:\Users\gabriele\APUBenchmarks\GPUPerfAPI\Include;C:\Program Files\Microsoft Research\Detours Express 3.0\include;C:\Program Files\AMD APP\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\gabriele\OpenCLMonitor\OpenCLComUtil;C:\Users\gabriele\APUBenchmarks\GPUPerfAPI\Include;C:\Program Files\Microsoft Research\Detours Express 3.0\include;C:\Program Files\AMD APP\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>C:\Users\gabriele\OpenCLSpy\Release;C:\Users\gabriele\APUBenchmarks\GPUPerfAPI\Bin\x86;C:\Program Files\Microsoft Research\Detours Express 3.0\lib.X86;C:\Program Files\AMD APP\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\gabriele\OpenCLMonitor\Release;C:\Users\gabriele\APUBenchmarks\GPUPerfAPI\Bin\x86;C:\Program Files\Microsoft Research\Detours Express 3.0\lib.X86;C:\Program Files\AMD APP\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>OpenCLComUtil.lib;GPUPerfAPICL.lib;detours.lib;OpenCL.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

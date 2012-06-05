@@ -18,13 +18,13 @@ extern "C" OPENCLCOMUTIL_API typedef enum OpenCLMonitoringMessageID {
      */
     public enum OpCodes
     {
-        CREATE,
-        ENUMERATE_COUNTERS,
-        PERF_INIT,
-        RELEASE,
-        GET_COUNTERS,
-        END,
-        OK
+        CREATE_QUEUE_MESSAGE,
+        ENABLE_COUNTERS_MESSAGE,
+        GPU_PERF_INIT_MESSAGE,
+        RELEASE_QUEUE_MESSAGE,
+        GET_COUNTERS_MESSAGE,
+        GPU_PERF_RELEASE_MESSAGE,
+        OK_MESSAGE
     }
 
     public class MonitorMessage
@@ -74,6 +74,9 @@ extern "C" OPENCLCOMUTIL_API typedef enum OpenCLMonitoringMessageID {
         /// <returns></returns>
         public static MonitorMessage ParseFromString(string rawString)
         {
+            rawString = Encoding.Unicode.GetString(Encoding.ASCII.GetBytes(rawString.ToCharArray()));
+            rawString = rawString.TrimEnd(new char[] { '\0' });
+
             MonitorMessage m = new MonitorMessage();
             string[] tags = rawString.Split(new string[] { " " }, StringSplitOptions.RemoveEmptyEntries);
             if (tags.Length < 3)
@@ -203,18 +206,18 @@ extern "C" OPENCLCOMUTIL_API typedef enum OpenCLMonitoringMessageID {
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();
-            sb.AppendFormat("{0} {1} {2} ", OpCode_Raw, As, Aps);
+            sb.AppendFormat("{0} {1} {2}", OpCode_Raw, As, Aps);
             if (Body != null)
             {
                 foreach (string b in Body)
                 {
-                    sb.AppendFormat("{0} ", b);
+                    sb.AppendFormat(" {0} ", b);
                 }
                 // remove last space
                 if (Body.Length > 0)
                     sb.Remove(sb.Length - 1, 1);
             }
-            return sb.ToString();
+            return Encoding.ASCII.GetString(Encoding.Unicode.GetBytes(sb.ToString().ToCharArray()));
         }
 
     }

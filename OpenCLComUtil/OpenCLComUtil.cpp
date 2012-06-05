@@ -5,11 +5,12 @@
 #include "OpenCLComUtil.h"
 
 int open_connection(char* pipe_name, bool server, HANDLE* pipe) {
+	
 	TCHAR w_pipe_name[BUFFER_SIZE] = { 0 };
 	MultiByteToWideChar(CP_ACP, 0, pipe_name, -1, w_pipe_name, BUFFER_SIZE);
 
 	if(!server) {
-		printf("Creating client pipe...\n");
+		printf("Creating client deh pipe %ls...\n", pipe_name);
 		*pipe = CreateFile( 
 			w_pipe_name,
 			GENERIC_READ | GENERIC_WRITE, 
@@ -18,13 +19,32 @@ int open_connection(char* pipe_name, bool server, HANDLE* pipe) {
 			OPEN_EXISTING,  // opens existing pipe 
 			0,              // default attributes 
 			NULL);          // no template file 
-  
-		if (*pipe != INVALID_HANDLE_VALUE) 
-			return -1; 
-		if (GetLastError() != ERROR_PIPE_BUSY) 
-			return GetLastError(); 
-		if (!WaitNamedPipe(w_pipe_name, 20000)) 
-			return -2; 
+
+		if(*pipe == INVALID_HANDLE_VALUE) {
+			if (GetLastError() == ERROR_FILE_NOT_FOUND) {
+				printf("Pipe not found, trying create it <-\n");
+				SetLastError(0);
+				printf("Reset last error\n");
+				*pipe = CreateFile( 
+					w_pipe_name,
+					GENERIC_READ | GENERIC_WRITE, 
+					0,              // no sharing 
+					NULL,           // default security attributes
+					CREATE_ALWAYS,  // opens existing pipe 
+					0,              // default attributes 
+					NULL);          // no template file 
+			}
+			if(*pipe == INVALID_HANDLE_VALUE) {
+				if (GetLastError() != ERROR_PIPE_BUSY) {
+					printf("Pipe not busy %d <-\n", GetLastError());
+					return GetLastError(); 
+				}
+			}
+			if (!WaitNamedPipe(w_pipe_name, NMPWAIT_WAIT_FOREVER)) {
+				printf("Wait timeout <-\n");
+				return -2; 
+			}
+		}
 		DWORD mode = PIPE_READMODE_MESSAGE; 
 		if(!SetNamedPipeHandleState(*pipe, &mode, NULL, NULL))
 			return GetLastError();
@@ -82,6 +102,7 @@ int send_message(HANDLE pipe, OpenCLMonitoringMessage* message) {
 	TCHAR w_buffer[BUFFER_SIZE] = { 0 };
 	MultiByteToWideChar(CP_ACP, 0, buffer, -1, w_buffer, BUFFER_SIZE);
 	//printf("Send message %ls, %s\n", w_buffer, buffer);
+	printf("--> Sending message ID %d = %ls\n", message->id, w_buffer);
 	bool result = WriteFile(pipe, w_buffer, BUFFER_SIZE, &bytes_written, NULL);
 	if(!result)
 		return GetLastError();
@@ -112,6 +133,7 @@ int receive_message(HANDLE pipe, OpenCLMonitoringMessage* message) {
 	if(!success || bytes_read == 0) 
 		return GetLastError();
 	//Parse message
+	printf("Received message %ls\n", w_buffer);
 	char buffer[BUFFER_SIZE] = { 0 };
 	wcstombs(buffer, w_buffer, BUFFER_SIZE);
 	//printf("Received message %s\n", buffer);

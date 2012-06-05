@@ -63,9 +63,13 @@ namespace OpenCLDotNetMonitor
         {
             try
             {
+                char[] data = new char[1024];
                 pipeServer.EndWaitForConnection(Result);
-                StreamString ss = new StreamString(pipeServer);
-                MonitorMessage messageIN = MonitorMessage.ParseFromString(ss.ReadString());
+                StreamReader reader = new StreamReader(pipeServer);
+                StreamWriter writer = new StreamWriter(pipeServer);
+
+                reader.ReadBlock(data, 0, 1024);
+                MonitorMessage messageIN = MonitorMessage.ParseFromString(new String(data));
                 Console.WriteLine("server received message " + messageIN.ToString());
                 if (messageIN.As == 0 && messageIN.Body.Length>0)
                 {
@@ -83,18 +87,18 @@ namespace OpenCLDotNetMonitor
                     if (token.semaphore.WaitOne(new TimeSpan(0, 0, 5), false))
                     {
                         // send pipe name
-                        MonitorMessage messageOUT = new MonitorMessage(OpCodes.OK, 0, 0, newPipeName);
-                        ss.WriteString(messageOUT.ToString());
+                        MonitorMessage messageOUT = new MonitorMessage(OpCodes.OK_MESSAGE, 0, 0, newPipeName);
+                        writer.Write(messageOUT.ToString());
+                        writer.Flush();
                     }
                     else
                     {
                         // timeout, aborting
-                        MonitorMessage messageOUT = new MonitorMessage(OpCodes.OK, 1, 0);
-                        ss.WriteString(messageOUT.ToString());
+                        MonitorMessage messageOUT = new MonitorMessage(OpCodes.OK_MESSAGE, 1, 0);
+                        writer.Write(messageOUT.ToString());
+                        writer.Flush();
                         token.abort = true;
-                    }
-
-      
+                    }   
                 }
                 else
                 {
@@ -125,8 +129,8 @@ namespace OpenCLDotNetMonitor
                     serverInstances,
                     PipeTransmissionMode.Message,
                     PipeOptions.None,
-                    1,
-                    1,
+                    1024,
+                    1024,
                     ps))
             {                Console.WriteLine("pipe {0} created, waiting..", token.queueName);
                 // inform the main thread that the queue is on
@@ -135,15 +139,20 @@ namespace OpenCLDotNetMonitor
                     return;
                 queuePipe.WaitForConnection();
                 Console.WriteLine("pipe {0} connected", token.queueName);
-                StreamString ss = new StreamString(queuePipe);
+                StreamReader reader = new StreamReader(queuePipe);
+                StreamWriter writer = new StreamWriter(queuePipe);
                 try
                 {
                     MonitorMessage messageIn;
                     // step 1: enable counters
-                    messageIn = MonitorMessage.ParseFromString(ss.ReadString());
+                    char[] data = new char[1024];
+                    for (int i = 0; i < data.Length; i++)
+                        data[i] = (char)0;
+                    reader.ReadBlock(data, 0, data.Length);
+                    messageIn = MonitorMessage.ParseFromString(new String(data));
                     Console.WriteLine("pipe {0} received {1}", token.queueName, messageIn.ToString());
 
-                    if (messageIn.OpCode != OpCodes.ENUMERATE_COUNTERS)
+                    if (messageIn.OpCode != OpCodes.ENABLE_COUNTERS_MESSAGE)
                         throw new InvalidOperationException("I was expeting an Enumerate Counters message and received " + messageIn.OpCode.ToString());
                     // counters
                     List<string> countersList = new List<string>(messageIn.Body);
@@ -152,29 +161,54 @@ namespace OpenCLDotNetMonitor
                     if (token.selectCounter != null)
                     {
                         string[] selectedCounters = token.selectCounter(token.DeviceId, countersList.ToArray());
-                        ss.WriteString(new MonitorMessage(OpCodes.OK, 0, 0, selectedCounters.Select(x => countersList.IndexOf(x)).ToArray()).ToString());
+                        writer.Write(new MonitorMessage(OpCodes.OK_MESSAGE, 0, 0, selectedCounters.Select(x => countersList.IndexOf(x)).ToArray()).ToString());
+                        writer.Flush();
                     }
                     else
                     {
                         // delegate not set!
-                        ss.WriteString(new MonitorMessage(OpCodes.OK, 0, 0, new int[]{}).ToString());
+                        writer.Write(new MonitorMessage(OpCodes.OK_MESSAGE, 0, 0, new int[] { }).ToString());
+                        writer.Flush();
                     }
                     // step 2:perf init
-                    messageIn = MonitorMessage.ParseFromString(ss.ReadString());
+                    for (int i = 0; i < data.Length; i++)
+                        data[i] = (char)0;
+                    reader.ReadBlock(data, 0, data.Length);
+                    messageIn = MonitorMessage.ParseFromString(new String(data));
                     Console.WriteLine("pipe {0} received {1}", token.queueName, messageIn.ToString());
-                    if (messageIn.OpCode != OpCodes.PERF_INIT)
+                    if (messageIn.OpCode != OpCodes.GPU_PERF_INIT_MESSAGE)
                         throw new InvalidOperationException("I was expeting an Perf init message and received " + messageIn.OpCode.ToString());
-                    ss.WriteString(new MonitorMessage(OpCodes.OK, 0, 0).ToString());
+                    writer.Write(new MonitorMessage(OpCodes.OK_MESSAGE, 0, 0).ToString());
+                    writer.Flush();
+
                     // step 3: release
-                    messageIn = MonitorMessage.ParseFromString(ss.ReadString());
-                    if (messageIn.OpCode != OpCodes.RELEASE)
+                    for (int i = 0; i < data.Length; i++)
+                        data[i] = (char)0;
+                    reader.ReadBlock(data, 0, data.Length);
+                    messageIn = MonitorMessage.ParseFromString(new String(data));
+                    if (messageIn.OpCode != OpCodes.RELEASE_QUEUE_MESSAGE)
                         throw new InvalidOperationException("I was expeting a release message and received " + messageIn.OpCode.ToString());
-                    ss.WriteString(new MonitorMessage(OpCodes.OK, 0, 0).ToString());
+                    writer.Write(new MonitorMessage(OpCodes.OK_MESSAGE, 0, 0).ToString());
+                    writer.Flush();
+
+                    // step 5: end
+                    for (int i = 0; i < data.Length; i++)
+                        data[i] = (char)0;
+                    reader.ReadBlock(data, 0, data.Length);
+                    messageIn = MonitorMessage.ParseFromString(new String(data));
+                    Console.WriteLine("pipe {0} received {1}", token.queueName, messageIn.ToString());
+                    if (messageIn.OpCode != OpCodes.GPU_PERF_RELEASE_MESSAGE)
+                        throw new InvalidOperationException("I was expeting an End message and received " + messageIn.OpCode.ToString());
+                    writer.Write(new MonitorMessage(OpCodes.OK_MESSAGE, 0, 0).ToString());
+                    writer.Flush();
 
                     // step 4: get counters
-                    messageIn = MonitorMessage.ParseFromString(ss.ReadString());
+                    for (int i = 0; i < data.Length; i++)
+                        data[i] = (char)0;
+                    reader.ReadBlock(data, 0, data.Length);
+                    messageIn = MonitorMessage.ParseFromString(new String(data));
                     Console.WriteLine("pipe {0} received {1}", token.queueName, messageIn.ToString());
-                    if (messageIn.OpCode != OpCodes.GET_COUNTERS)
+                    if (messageIn.OpCode != OpCodes.GET_COUNTERS_MESSAGE)
                         throw new InvalidOperationException("I was expeting a Get Counters message and received " + messageIn.OpCode.ToString());
                     float[] values = messageIn.BodyAsFloatArray;
                     // TODO: send values
@@ -183,14 +217,9 @@ namespace OpenCLDotNetMonitor
                         token.receivedValues(token.DeviceId, values);
                     }
 
-                    ss.WriteString(new MonitorMessage(OpCodes.OK, 0, 0).ToString());
+                    writer.Write(new MonitorMessage(OpCodes.OK_MESSAGE, 0, 0).ToString());
+                    writer.Flush();
 
-                    // step 5: end
-                    messageIn = MonitorMessage.ParseFromString(ss.ReadString());
-                    Console.WriteLine("pipe {0} received {1}", token.queueName, messageIn.ToString());
-                    if (messageIn.OpCode != OpCodes.END)
-                        throw new InvalidOperationException("I was expeting an End message and received " + messageIn.OpCode.ToString());
-                    ss.WriteString(new MonitorMessage(OpCodes.OK, 0, 0).ToString());
 
                 }
                 // Catch the IOException that is raised if the pipe is broken
@@ -202,7 +231,8 @@ namespace OpenCLDotNetMonitor
                 catch (InvalidOperationException e)
                 {
                     // TODO: what is the code for invalid operation?
-                    ss.WriteString(new MonitorMessage(OpCodes.OK, 1, 1).ToString());
+                    writer.Write(new MonitorMessage(OpCodes.OK_MESSAGE, 1, 1).ToString());
+                    writer.Flush();
                 }
                 finally
                 {

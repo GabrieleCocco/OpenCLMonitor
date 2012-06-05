@@ -101,11 +101,13 @@ namespace OpenCLDotNetMonitor
                     // received a message with error code
                     Console.WriteLine("return code {0}, error code {1}", messageIN.As, messageIN.Aps);
                 }
+                pipeServer.Disconnect();
+                AsyncCallback myCallback = new AsyncCallback(AsyncPipeCallback);
+                pipeServer.BeginWaitForConnection(myCallback, null);
             }
             catch (OperationCanceledException)
             {
                 Console.WriteLine("Oops, exiting the thread that started the BeginWaitForConnection() on this pipe has cancelled BeginWaitForConnection().");
-                Console.WriteLine("WHY???");
             }
         }
 

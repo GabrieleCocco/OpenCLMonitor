@@ -15,8 +15,11 @@ namespace OpenCLMonitorTester
             OpenCLMonitorServer server = new OpenCLMonitorServer();
             server.StartServer(new OpenCLMonitorServer.SelectCounter(SelectCounters), new OpenCLMonitorServer.ReceivedValues(ReceivedValues));
             Console.WriteLine("waiting for data");
-            //ThreadPool.QueueUserWorkItem(new WaitCallback(TestClient), new object());
-            //Console.WriteLine("test program running, press enter to stop");
+            ThreadPool.QueueUserWorkItem(new WaitCallback(TestClient), new object());
+            Console.WriteLine("test program running, press enter to start another test");
+            Console.ReadLine();
+            ThreadPool.QueueUserWorkItem(new WaitCallback(TestClient), new object());
+            Console.WriteLine("test program running, press enter to stop");
             Console.ReadLine();
             server.StopServer();
         }

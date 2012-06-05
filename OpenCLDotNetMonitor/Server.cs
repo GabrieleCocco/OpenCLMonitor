@@ -47,7 +47,7 @@ namespace OpenCLDotNetMonitor
             if (pipeServer.IsConnected)
                 pipeServer.Disconnect();
             pipeServer.Dispose();
-        }
+        }                                       
 
         /// <summary>
         /// creates an unique pipe name
